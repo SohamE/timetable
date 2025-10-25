@@ -1,0 +1,21 @@
+name: Build Project and dump artifact.
+on:
+  pull_request:
+    types: [opened]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo in VM
+        uses: actions/checkout@v3
+      - name: Install npm and build
+      # | operator treats each everything follows as a multi-line literal block
+        run: |
+          npm i
+          npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@main
+        with:
+          name: Vite artifacts
+          path: public/
