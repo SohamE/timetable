@@ -12,7 +12,7 @@ type HourTablePropsType = {
 const HourTable = ({ hour, date }: HourTablePropsType) => {
   const [showModal, setShowModal] = useState(false);
   const closeModal = () => setShowModal(false);
-  const { tasks, removeTask, editTask } = useMainContext();
+  const { tasks, removeTask } = useMainContext();
 
   const task = tasks.filter(
     (task) => task.date == format(date, "d-L-yyyy") && task.time == hour
@@ -29,7 +29,7 @@ const HourTable = ({ hour, date }: HourTablePropsType) => {
         {task.length > 0 ? (
           <div className="flex gap-4">
             <button>E</button>
-            <button onClick={(e) => removeTask({ id: task[0].id })}>D</button>
+            <button onClick={() => removeTask({ id: task[0].id })}>D</button>
           </div>
         ) : (
           <button className="w-[5%]" onClick={() => setShowModal((d) => !d)}>
