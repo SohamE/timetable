@@ -6,6 +6,12 @@ on:
     types: [created, edited]
 
 jobs:
+  show-github-obj:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print GitHub context (pretty JSON)
+        run: |
+          echo '${{ toJson(github) }}' | jq .
   build:
     if: >
       (github.event_name == 'pull_request' && 
