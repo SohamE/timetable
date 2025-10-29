@@ -1,0 +1,64 @@
+name: Build and deploy project to vercel on PR to main
+on:
+  pull_request:
+    types: [opened]
+  issue_comment:
+    types: [created, edited]
+
+jobs:
+  show-github-obj:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Print GitHub context (pretty JSON)
+        run: |
+          echo '${{ toJson(github) }}' | jq .
+  build:
+    if: >
+      (github.event_name == 'pull_request' && 
+      github.event.pull_request.base.ref == 'main') ||
+      (github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request &&
+      contains(github.event.comment.body, 'run build'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout the repo in VM
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: |
+            ${{ github.event.pull_request.head.ref || github.event.issue.pull_request.head.ref }}
+      - name: Use Node.js
+        uses: actions/setup-node@v4
+      - name: Install npm and build
+        # | operator treats each everything follows as a multi-line literal block
+        run: |
+          npm i
+          npm run build
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: Vite Build artifacts
+          path: dist/
+  spin-up-vercel-app:
+    runs-on: ubuntu-latest
+    needs: build
+    environment: Vercel
+    steps:
+      - name: Check secrets availability
+        run: |
+          echo ${{ secrets.VERCEL_TOKEN }}
+          echo ${{ secrets.ORG_ID}}
+          echo ${{ secrets.PROJECT_ID}}
+      - name: Checkout the repo in VM
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          ref: |
+            ${{ github.event.pull_request.head.ref || github.event.issue.pull_request.head.ref }}
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25 # deploy
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.ORG_ID}}
+          vercel-project-id: ${{ secrets.PROJECT_ID}}
+          working-directory: ./
